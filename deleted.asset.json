@@ -1,0 +1,45 @@
+{
+  "type": "video.asset.deleted",
+  "request_id": null,
+  "object": {
+    "type": "asset",
+    "id": "Pj2do2VSZ02nqM25OevezUSLZ02Opk4gF5Ps004w4otXjA"
+  },
+  "id": "2fd303d9-87e0-a595-24e1-45e98f8c8808",
+  "environment": { "name": "Production", "id": "j6k0n6" },
+  "data": {
+    "video_quality": "basic",
+    "upload_id": "izGyyp2bjMMmsF4EDqG3c02WEWXMGxn02XK4qIQ564I02k",
+    "tracks": [
+      {
+        "type": "video",
+        "max_width": 1858,
+        "max_height": 940,
+        "max_frame_rate": 30.303,
+        "id": "ix73g2g4ctsXloh5tf02s1fijcgfM02WTIB8JTXqVkhP8"
+      }
+    ],
+    "status": "ready",
+    "resolution_tier": "1080p",
+    "progress": { "state": "completed" },
+    "non_standard_input_reasons": {
+      "video_codec": "vp8",
+      "unexpected_video_parameters": "video_dimension_not_divisible_by_2"
+    },
+    "mp4_support": "none",
+    "max_stored_resolution": "HD",
+    "max_stored_frame_rate": 30.303,
+    "max_resolution_tier": "1080p",
+    "master_access": "none",
+    "ingest_type": "on_demand_direct_upload",
+    "id": "Pj2do2VSZ02nqM25OevezUSLZ02Opk4gF5Ps004w4otXjA",
+    "encoding_tier": "baseline",
+    "duration": 17.733333,
+    "created_at": 1742905262,
+    "aspect_ratio": "929:470"
+  },
+  "created_at": "2025-03-25T12:24:17.392000Z",
+  "attempts": [],
+  "accessor_source": null,
+  "accessor": null
+}

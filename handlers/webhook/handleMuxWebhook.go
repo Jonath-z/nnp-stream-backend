@@ -1,4 +1,4 @@
-package handlers
+package webhook
 
 import (
 	"encoding/json"
@@ -8,25 +8,27 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nnp-stream-backend/internal"
 	"github.com/nnp-stream-backend/models"
 )
 
-type Handler struct {
-}
-
 func HandleMuxWebhook(c *gin.Context) {
-	log.Println(c.Request.URL)
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		fmt.Println(err.Error(), "ERRRRRRO RRRRRRR")
+		fmt.Println(err.Error(), "ERROR")
 	}
 
 	var muxWebhookPayload models.MuxWebhookPayload
-	marchalErr := json.Unmarshal(body, muxWebhookPayload)
+	marchalErr := json.Unmarshal(body, &muxWebhookPayload)
 	if marchalErr != nil {
-		log.Print("Unable to unmarshal webhook payload")
+		log.Print("Unable to unmarshal webhook payload", marchalErr.Error())
 	}
-	log.Println("Data", string(body), muxWebhookPayload.ID)
+
+	log.Println("Data", muxWebhookPayload.ID)
+
+	if muxWebhookPayload.Type == "video.asset.ready" {
+		internal.UploadDraftAsset(muxWebhookPayload.Data.ID)
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Webhook received successfully",
