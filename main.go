@@ -19,12 +19,11 @@ func init() {
 
 func main() {
 	r := gin.Default()
-
+	// r.Use(middleware.Cors)
 	r.GET("/", handlers.HealthCheck)
 	r.GET("/mux-signed-url", handlers.HandleMuxSignedUploadUrl)
 	r.POST("/mux-web-hook", webhook.HandleMuxWebhook)
 
-	// Add a catch-all route to log any unhandled routes
 	r.NoRoute(func(c *gin.Context) {
 		log.Printf("Unhandled route: %s %s", c.Request.Method, c.Request.URL.Path)
 		c.JSON(404, gin.H{"message": "Not found"})

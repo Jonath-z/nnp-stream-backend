@@ -18,7 +18,7 @@ func HandleMuxWebhook(c *gin.Context) {
 		fmt.Println(err.Error(), "ERROR")
 	}
 
-	var muxWebhookPayload models.MuxWebhookPayload
+	var muxWebhookPayload models.VideoAssetReadyEvent
 	marchalErr := json.Unmarshal(body, &muxWebhookPayload)
 	if marchalErr != nil {
 		log.Print("Unable to unmarshal webhook payload", marchalErr.Error())
@@ -27,7 +27,11 @@ func HandleMuxWebhook(c *gin.Context) {
 	log.Println("Data", muxWebhookPayload.ID)
 
 	if muxWebhookPayload.Type == "video.asset.ready" {
-		internal.UploadDraftAsset(muxWebhookPayload.Data.ID)
+		internal.UploadDraftAsset(models.UploadDraftPayload{
+			AssetID:    muxWebhookPayload.Data.UploadID,
+			PlaybackId: muxWebhookPayload.Data.PlaybackIDs[0].ID,
+			Duration:   muxWebhookPayload.Data.Duration,
+		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{

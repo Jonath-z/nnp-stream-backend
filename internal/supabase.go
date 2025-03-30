@@ -16,9 +16,11 @@ const (
 	TABLE_DRAFTS = "drafts"
 )
 
-func UploadDraftAsset(assetId string) string {
+func UploadDraftAsset(payload models.UploadDraftPayload) string {
 	draftAsset := models.UploadDraftAssetDTO{
-		MuxAssetId: assetId,
+		MuxAssetId: payload.AssetID,
+		PlaybackID: payload.PlaybackId,
+		Duration:   payload.Duration,
 	}
 
 	client, err := SupabaseClient()
