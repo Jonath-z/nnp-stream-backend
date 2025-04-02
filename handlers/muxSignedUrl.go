@@ -13,7 +13,8 @@ func HandleMuxSignedUploadUrl(c *gin.Context) {
 
 	if err != nil {
 		log.Print("ERROR HANDLING SIGNED URL: ", err.Error())
-		c.JSON(http.StatusBadRequest, err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, muxSignedUrlResponse.Data.Url)
