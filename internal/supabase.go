@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/nnp-stream-backend/models"
+	"github.com/nnp-stream-backend/models/event"
 	"github.com/supabase-community/supabase-go"
 )
 
@@ -14,6 +15,7 @@ func SupabaseClient() (*supabase.Client, error) {
 
 const (
 	TABLE_DRAFTS = "drafts"
+	TABLE_USERS  = "users"
 )
 
 func UploadDraftAsset(payload models.UploadDraftPayload) string {
@@ -33,4 +35,24 @@ func UploadDraftAsset(payload models.UploadDraftPayload) string {
 	}
 	log.Printf("Created draft asset: %+v", draftAsset)
 	return draftAsset.MuxAssetId
+}
+
+func CreateUser(payload event.ClerkUserEvent) string {
+	user := models.CreateUserDto{
+		Email:       payload.Data.EmailAddresses[0].EmailAddress,
+		ClerkUserId: payload.Data.ID,
+	}
+
+	client, err := SupabaseClient()
+	if err != nil {
+		log.Fatalf("Error initializing Supabase client: %v", err)
+	}
+
+	_, _, uploadError := client.From(TABLE_USERS).Insert(&user, true, "", "", "").Execute()
+	if uploadError != nil {
+		log.Fatalf("Error uploading draft asset: %v", uploadError)
+	}
+	log.Printf("Created user: %+v", user)
+
+	return user.Email
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nnp-stream-backend/internal"
 	"github.com/nnp-stream-backend/models"
+	"github.com/nnp-stream-backend/models/event"
 )
 
 func HandleMuxWebhook(c *gin.Context) {
@@ -18,7 +19,7 @@ func HandleMuxWebhook(c *gin.Context) {
 		fmt.Println(err.Error(), "ERROR")
 	}
 
-	var muxWebhookPayload models.VideoAssetReadyEvent
+	var muxWebhookPayload event.VideoAssetReadyEvent
 	marchalErr := json.Unmarshal(body, &muxWebhookPayload)
 	if marchalErr != nil {
 		log.Print("Unable to unmarshal webhook payload", marchalErr.Error())

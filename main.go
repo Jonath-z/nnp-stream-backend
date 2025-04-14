@@ -38,6 +38,7 @@ func main() {
 	r.GET("/", handlers.HealthCheck)
 	r.GET("/mux-signed-url", handlers.HandleMuxSignedUploadUrl)
 	r.POST("/mux-web-hook", webhook.HandleMuxWebhook)
+	r.POST("/clerk-web-hook", webhook.HandleCleckWebhook)
 
 	r.NoRoute(func(c *gin.Context) {
 		log.Printf("Unhandled route: %s %s", c.Request.Method, c.Request.URL.Path)

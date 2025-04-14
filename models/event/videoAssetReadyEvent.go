@@ -1,4 +1,4 @@
-package models
+package event
 
 type VideoAssetReadyEvent struct {
 	Type           string      `json:"type"`
