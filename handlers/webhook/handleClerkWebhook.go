@@ -16,7 +16,10 @@ func HandleCleckWebhook(c *gin.Context) {
 		fmt.Println(err.Error(), "ERROR")
 	}
 	var clerkWebhookPayload event.ClerkUserEvent
-	json.Unmarshal(body, &clerkWebhookPayload)
+	unmarchallErr := json.Unmarshal(body, &clerkWebhookPayload)
+	if unmarchallErr != nil {
+		fmt.Println("Error while unmarchalling", unmarchallErr)
+	}
 
 	if clerkWebhookPayload.Type == "user.created" {
 		internal.CreateUser(clerkWebhookPayload)
