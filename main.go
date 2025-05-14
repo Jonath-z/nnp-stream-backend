@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/nnp-stream-backend/handlers"
 	"github.com/nnp-stream-backend/handlers/webhook"
+	"github.com/nnp-stream-backend/internal/middleware"
 )
 
 func validateEnvVars() error {
@@ -34,7 +35,7 @@ func init() {
 
 func main() {
 	r := gin.Default()
-	// r.Use(middleware.Cors)
+	r.Use(middleware.Cors)
 	r.GET("/", handlers.HealthCheck)
 	r.GET("/mux-signed-url", handlers.HandleMuxSignedUploadUrl)
 	r.POST("/mux-web-hook", webhook.HandleMuxWebhook)
