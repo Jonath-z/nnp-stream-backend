@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"github.com/nnp-stream-backend/handlers"
-	"github.com/nnp-stream-backend/handlers/webhook"
+	"github.com/nnp-stream-backend/internal/handlers"
+	"github.com/nnp-stream-backend/internal/handlers/webhook"
 	"github.com/nnp-stream-backend/internal/middleware"
 )
 
@@ -40,7 +40,9 @@ func main() {
 	r.GET("/mux-signed-url", handlers.HandleMuxSignedUploadUrl)
 	r.POST("/mux-web-hook", webhook.HandleMuxWebhook)
 	r.POST("/clerk-web-hook", webhook.HandleCleckWebhook)
-
+	r.POST("/mux-live-stream", handlers.HandleMuxLiveStream)
+	r.DELETE("/mux-live-stream/:liveStreamID", handlers.HandleMuxDeleteLiveStream)
+	
 	r.NoRoute(func(c *gin.Context) {
 		log.Printf("Unhandled route: %s %s", c.Request.Method, c.Request.URL.Path)
 		c.JSON(404, gin.H{"message": "Not found"})
