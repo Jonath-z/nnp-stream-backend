@@ -10,6 +10,10 @@ import (
 	"github.com/nnp-stream-backend/internal/handlers"
 	"github.com/nnp-stream-backend/internal/handlers/webhook"
 	"github.com/nnp-stream-backend/internal/middleware"
+
+	_ "github.com/nnp-stream-backend/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func validateEnvVars() error {
@@ -33,6 +37,11 @@ func init() {
 	}
 }
 
+// @title NNP Stream Backend API
+// @version 1.0
+// @description API for managing video streams, uploads, and analytics powered by Mux
+// @host localhost:8080
+// @BasePath /
 func main() {
 	r := gin.Default()
 	r.Use(middleware.Cors)
@@ -42,7 +51,19 @@ func main() {
 	r.POST("/clerk-web-hook", webhook.HandleCleckWebhook)
 	r.POST("/mux-live-stream", handlers.HandleMuxLiveStream)
 	r.DELETE("/mux-live-stream/:liveStreamID", handlers.HandleMuxDeleteLiveStream)
-	
+
+	// Analytics endpoints
+	r.GET("/analytics/assets", handlers.HandleListAssets)
+	r.GET("/analytics/assets/:assetID", handlers.HandleGetAsset)
+	r.GET("/analytics/views", handlers.HandleListVideoViews)
+	r.GET("/analytics/views/:videoViewID", handlers.HandleGetVideoView)
+	r.GET("/analytics/metrics/overall", handlers.HandleGetOverallMetrics)
+	r.GET("/analytics/metrics/timeseries", handlers.HandleGetMetricTimeseries)
+	r.GET("/analytics/metrics/breakdown", handlers.HandleGetMetricBreakdown)
+
+	// Swagger docs
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	r.NoRoute(func(c *gin.Context) {
 		log.Printf("Unhandled route: %s %s", c.Request.Method, c.Request.URL.Path)
 		c.JSON(404, gin.H{"message": "Not found"})

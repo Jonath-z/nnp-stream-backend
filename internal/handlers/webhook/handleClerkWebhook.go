@@ -10,6 +10,14 @@ import (
 	"github.com/nnp-stream-backend/models/event"
 )
 
+// HandleCleckWebhook godoc
+// @Summary Clerk webhook receiver
+// @Description Receives Clerk webhook events (e.g. user.created) and syncs users
+// @Tags webhooks
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Router /clerk-web-hook [post]
 func HandleCleckWebhook(c *gin.Context) {
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {

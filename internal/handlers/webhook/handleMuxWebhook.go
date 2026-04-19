@@ -13,6 +13,14 @@ import (
 	"github.com/nnp-stream-backend/models/event"
 )
 
+// HandleMuxWebhook godoc
+// @Summary Mux webhook receiver
+// @Description Receives Mux webhook events (e.g. video.asset.ready) and creates draft assets
+// @Tags webhooks
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Router /mux-web-hook [post]
 func HandleMuxWebhook(c *gin.Context) {
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {

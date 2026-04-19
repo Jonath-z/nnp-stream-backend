@@ -1,0 +1,348 @@
+basePath: /
+host: localhost:8080
+info:
+  contact: {}
+  description: API for managing video streams, uploads, and analytics powered by Mux
+  title: NNP Stream Backend API
+  version: "1.0"
+paths:
+  /:
+    get:
+      description: Returns a welcome message to verify the service is running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health check
+      tags:
+      - health
+  /analytics/assets:
+    get:
+      description: Returns a paginated list of all Mux video assets
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List video assets
+      tags:
+      - analytics
+  /analytics/assets/{assetID}:
+    get:
+      description: Returns details for a specific Mux video asset including duration,
+        status, resolution, and playback IDs
+      parameters:
+      - description: Mux Asset ID
+        in: path
+        name: assetID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get asset details
+      tags:
+      - analytics
+  /analytics/metrics/breakdown:
+    get:
+      description: Returns metric values broken down by a dimension (e.g. browser,
+        country, operating_system, device)
+      parameters:
+      - default: views
+        description: Metric ID
+        in: query
+        name: metric
+        type: string
+      - default: browser
+        description: Dimension to group by (browser, country, operating_system, device)
+        in: query
+        name: group_by
+        type: string
+      - default: 24:hours
+        description: Timeframe filter
+        in: query
+        name: timeframe
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get metric breakdown
+      tags:
+      - analytics
+  /analytics/metrics/overall:
+    get:
+      description: Returns aggregate values for a specific metric (e.g. views, video_startup_time,
+        rebuffer_percentage)
+      parameters:
+      - default: video_startup_time
+        description: Metric ID (views, video_startup_time, rebuffer_percentage, rebuffer_frequency,
+          exits_before_video_start, playback_failure_percentage, player_startup_time)
+        in: query
+        name: metric
+        type: string
+      - default: 24:hours
+        description: Timeframe filter
+        in: query
+        name: timeframe
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get overall metric values
+      tags:
+      - analytics
+  /analytics/metrics/timeseries:
+    get:
+      description: Returns metric values over time, useful for charting trends on
+        the dashboard
+      parameters:
+      - default: views
+        description: Metric ID
+        in: query
+        name: metric
+        type: string
+      - default: 24:hours
+        description: Timeframe filter
+        in: query
+        name: timeframe
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get metric timeseries data
+      tags:
+      - analytics
+  /analytics/views:
+    get:
+      description: Returns a paginated list of video views within a timeframe
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 25
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - default: 24:hours
+        description: Timeframe filter (e.g. 24:hours, 7:days)
+        in: query
+        name: timeframe
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List video views
+      tags:
+      - analytics
+  /analytics/views/{videoViewID}:
+    get:
+      description: Returns detailed information for a specific video view session
+      parameters:
+      - description: Video View ID
+        in: path
+        name: videoViewID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get video view details
+      tags:
+      - analytics
+  /clerk-web-hook:
+    post:
+      consumes:
+      - application/json
+      description: Receives Clerk webhook events (e.g. user.created) and syncs users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Clerk webhook receiver
+      tags:
+      - webhooks
+  /mux-live-stream:
+    post:
+      description: Creates a new low-latency Mux live stream with public playback
+        policy
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a live stream
+      tags:
+      - live-streams
+  /mux-live-stream/{liveStreamID}:
+    delete:
+      description: Deletes a Mux live stream by its ID
+      parameters:
+      - description: Live Stream ID
+        in: path
+        name: liveStreamID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a live stream
+      tags:
+      - live-streams
+  /mux-signed-url:
+    get:
+      description: Generates a new Mux direct upload URL for uploading video assets
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Signed upload URL
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a signed upload URL
+      tags:
+      - uploads
+  /mux-web-hook:
+    post:
+      consumes:
+      - application/json
+      description: Receives Mux webhook events (e.g. video.asset.ready) and creates
+        draft assets
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Mux webhook receiver
+      tags:
+      - webhooks
+swagger: "2.0"

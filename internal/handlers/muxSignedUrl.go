@@ -8,6 +8,14 @@ import (
 	"github.com/nnp-stream-backend/internal"
 )
 
+// HandleMuxSignedUploadUrl godoc
+// @Summary Get a signed upload URL
+// @Description Generates a new Mux direct upload URL for uploading video assets
+// @Tags uploads
+// @Produce json
+// @Success 200 {string} string "Signed upload URL"
+// @Failure 400 {object} map[string]string
+// @Router /mux-signed-url [get]
 func HandleMuxSignedUploadUrl(c *gin.Context) {
 	muxSignedUrlResponse, err := internal.GenerateMuxUploadURL()
 
