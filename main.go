@@ -17,7 +17,12 @@ import (
 )
 
 func validateEnvVars() error {
-	requiredEnvVars := []string{"MUX_TOKEN_ID", "MUX_TOKEN_SECRET"}
+	requiredEnvVars := []string{
+		"MUX_TOKEN_ID",
+		"MUX_TOKEN_SECRET",
+		"SHWARY_MERCHANT_ID",
+		"SHWARY_MERCHANT_KEY",
+	}
 	for _, envVar := range requiredEnvVars {
 		if os.Getenv(envVar) == "" {
 			return fmt.Errorf("required environment variable %s is not set", envVar)
@@ -49,6 +54,10 @@ func main() {
 	r.GET("/mux-signed-url", handlers.HandleMuxSignedUploadUrl)
 	r.POST("/mux-web-hook", webhook.HandleMuxWebhook)
 	r.POST("/clerk-web-hook", webhook.HandleCleckWebhook)
+	r.POST("/shwary-web-hook", webhook.HandleShwaryWebhook)
+
+	// Subscriptions / payments
+	r.POST("/subscriptions", handlers.HandleSubscribeToPlan)
 	r.POST("/mux-live-stream", handlers.HandleMuxLiveStream)
 	r.DELETE("/mux-live-stream/:liveStreamID", handlers.HandleMuxDeleteLiveStream)
 
