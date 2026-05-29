@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/nnp-stream-backend/models"
@@ -16,7 +17,21 @@ const (
 	shwaryDefaultBaseURL = "https://api.shwary.com"
 	shwaryCountryDRC     = "DRC"
 	shwaryCurrencyUSD    = "USD"
+	shwaryWebhookPath    = "/shwary-web-hook"
 )
+
+func shwaryCallbackURL() string {
+	if v := os.Getenv("SHWARY_CALLBACK_URL"); v != "" {
+		return v
+	}
+	if base := os.Getenv("RENDER_EXTERNAL_URL"); base != "" {
+		return strings.TrimRight(base, "/") + shwaryWebhookPath
+	}
+	if host := os.Getenv("RENDER_EXTERNAL_HOSTNAME"); host != "" {
+		return "https://" + host + shwaryWebhookPath
+	}
+	return ""
+}
 
 func shwaryBaseURL() string {
 	if v := os.Getenv("SHWARY_BASE_URL"); v != "" {
@@ -49,7 +64,7 @@ func InitiateShwaryPayment(amount float64, phoneNumber, referenceID string) (mod
 	body := models.ShwaryPaymentRequest{
 		Amount:            amount,
 		ClientPhoneNumber: phoneNumber,
-		CallbackUrl:       os.Getenv("SHWARY_CALLBACK_URL"),
+		CallbackUrl:       shwaryCallbackURL(),
 		Currency:          shwaryCurrencyUSD,
 		ReferenceID:       referenceID,
 	}
