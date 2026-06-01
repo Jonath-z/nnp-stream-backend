@@ -10,7 +10,7 @@ const (
 )
 
 type Subscription struct {
-	ID        string `json:"id,omitempty"`
+	ID        int8   `json:"id,omitempty"`
 	CreatedAt string `json:"created_at,omitempty"`
 	UserID    string `json:"user_id"`
 	PlanID    string `json:"plan_id"`
