@@ -15,8 +15,8 @@ type Subscription struct {
 	UserID    string             `json:"user_id"`
 	PlanID    string             `json:"plan_id"`
 	Status    SubscriptionStatus `json:"status,omitempty"`
-	StartedAt string             `json:"started_at,omitempty"`
-	ExpiresAt string             `json:"expires_at,omitempty"`
+	StartedAt string             `json:"start_at,omitempty"`
+	ExpiresAt string             `json:"end_at,omitempty"`
 }
 
 type PaymentTransaction struct {
