@@ -10,7 +10,7 @@ import (
 
 const (
 	TABLE_PLANS         = "plans"
-	TABLE_SUBSCRIPTIONS = "subscriptions"
+	TABLE_SUBSCRIPTIONS = "user_subscriptions"
 	TABLE_TRANSACTIONS  = "payment_transactions"
 )
 
