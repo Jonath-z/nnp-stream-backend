@@ -121,12 +121,12 @@ Returns the current state of a subscription. Use this to poll after `POST /subsc
   "user_id": "<supabase user id>",
   "plan_id": "plan_basic_monthly",
   "status": "active",
-  "started_at": "2026-05-28T10:12:48Z",
-  "expires_at": "2026-06-28T10:12:48Z"
+  "start_at": "2026-05-28T10:12:48Z",
+  "end_at": "2026-06-28T10:12:48Z"
 }
 ```
 
-`status` is one of `pending`, `active`, `failed`, `canceled`. `started_at` and `expires_at` are only set once the subscription becomes `active` (and `expires_at` is omitted entirely for `life_time` plans).
+`status` is one of `pending`, `active`, `failed`, `canceled`. `start_at` and `end_at` are only set once the subscription becomes `active` (and `expires_at` is omitted entirely for `life_time` plans).
 
 **Error responses**
 
@@ -172,8 +172,8 @@ Example:
     "user_id": "<supabase user id>",
     "plan_id": "plan_basic_monthly",
     "status": "active",
-    "started_at": "2026-05-28T10:12:48Z",
-    "expires_at": "2026-06-28T10:12:48Z"
+    "star_at": "2026-05-28T10:12:48Z",
+    "end_at": "2026-06-28T10:12:48Z"
   }
 }
 ```
@@ -203,12 +203,12 @@ The `subscription` field is included whenever the user has any record for a gati
 
 A subscription transitions through these statuses (string values stored in the row):
 
-| Status     | Meaning                                                      |
-| ---------- | ------------------------------------------------------------ |
-| `pending`  | Awaiting Shwary callback. User must confirm on their phone.  |
-| `active`   | Payment completed. `started_at` is set; `expires_at` is set for monthly/yearly plans (unset for `life_time`). |
-| `failed`   | Shwary reported failure, or the payment provider call failed. |
-| `canceled` | Shwary reported cancellation (user declined / timed out).    |
+| Status     | Meaning                                                                                                 |
+| ---------- |---------------------------------------------------------------------------------------------------------|
+| `pending`  | Awaiting Shwary callback. User must confirm on their phone.                                             |
+| `active`   | Payment completed. `start_at` is set; `end_at` is set for monthly/yearly plans (unset for `life_time`). |
+| `failed`   | Shwary reported failure, or the payment provider call failed.                                           |
+| `canceled` | Shwary reported cancellation (user declined / timed out).                                               |
 
 `expires_at` is computed from the plan's `billing_cycle`:
 
@@ -311,8 +311,8 @@ type Subscription = {
   user_id: string;
   plan_id: string;
   status: SubscriptionStatus;
-  started_at?: string;
-  expires_at?: string;
+  start_at?: string;
+  end_at?: string;
 };
 
 type ShwaryTransaction = {

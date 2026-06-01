@@ -62,9 +62,9 @@ func UpdateSubscriptionStatus(subscriptionID string, status models.SubscriptionS
 
 	patch := map[string]interface{}{"status": status}
 	if status == models.SubscriptionStatusActive {
-		patch["started_at"] = time.Now().UTC().Format(time.RFC3339)
+		patch["start_at"] = time.Now().UTC().Format(time.RFC3339)
 		if expiresAt != "" {
-			patch["expires_at"] = expiresAt
+			patch["end_at"] = expiresAt
 		}
 	}
 
