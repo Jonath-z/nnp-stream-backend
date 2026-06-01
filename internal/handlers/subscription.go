@@ -44,8 +44,13 @@ func HandleSubscribeToPlan(c *gin.Context) {
 		return
 	}
 
+	user, userError := internal.GetUserByClerkUserId(req.UserID)
+	if userError != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+	}
+
 	subscription, err := internal.CreateSubscription(models.Subscription{
-		UserID: req.UserID,
+		UserID: user.Id,
 		PlanID: plan.ID,
 	})
 	if err != nil {

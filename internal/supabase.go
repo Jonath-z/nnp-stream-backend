@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 
@@ -55,4 +56,29 @@ func CreateUser(payload event.ClerkUserEvent) string {
 	log.Printf("Created user: %+v", user)
 
 	return user.Email
+}
+
+func GetUserByClerkUserId(clerkUserId string) (*models.User, error) {
+	client, err := SupabaseClient()
+	if err != nil {
+		log.Fatalf("Error initializing Supabase client: %v", err)
+		return nil, err
+	}
+
+	userByte, _, err_ := client.From(TABLE_USERS).Select("*", "", false).Eq("clerk_id", clerkUserId).Execute()
+	if err_ != nil {
+		return nil, err_
+	}
+
+	var users []models.User
+	if err := json.Unmarshal(userByte, &users); err != nil {
+		return nil, err
+	}
+
+	if len(users) == 0 {
+		log.Fatalf("Error getting user by clerk user: %v", err_)
+		return nil, err_
+	}
+
+	return &users[0], nil
 }
