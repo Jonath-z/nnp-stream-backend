@@ -69,7 +69,7 @@ func HandleSubscribeToPlan(c *gin.Context) {
 	}
 
 	if _, err := internal.CreatePaymentTransaction(models.PaymentTransaction{
-		UserID:         req.UserID,
+		UserID:         user.Id,
 		PlanID:         plan.ID,
 		SubscriptionID: subscription.ID,
 		Provider:       "shwary",
