@@ -11,15 +11,20 @@ The frontend never talks to Shwary directly.
 ## Flow overview
 
 ```
-┌──────────┐  1. POST /subscriptions   ┌─────────┐  2. Initiate payment  ┌────────┐
-│ Frontend │ ────────────────────────▶ │ Backend │ ───────────────────▶  │ Shwary │
-└──────────┘                           └─────────┘                       └────────┘
-     ▲                                      ▲                                │
-     │ 5. Poll subscription status          │ 4. POST /shwary-web-hook       │
-     │ (or subscribe to Supabase realtime)  └────────────────────────────────┘
-     │                                              (final status)
+┌──────────┐  1. POST /subscriptions          ┌─────────┐  2. Initiate payment  ┌────────┐
+│ Frontend │ ───────────────────────────────▶ │ Backend │ ───────────────────▶  │ Shwary │
+└──────────┘                                  └─────────┘                       └────────┘
+     ▲   │                                         ▲                                │
+     │   │ 5. GET /subscriptions/:id (poll)        │ 4. POST /shwary-web-hook       │
+     │   ▼                                         └────────────────────────────────┘
+     │  (or Supabase realtime)                            (final status)
      │
      │ 3. 202 Accepted — { subscription: pending, transaction: pending }
+
+  Watching a video:
+┌──────────┐  POST /subscriptions/access      ┌─────────┐
+│ Frontend │ ───────────────────────────────▶ │ Backend │  → { has_access, reason, subscription? }
+└──────────┘                                  └─────────┘
 ```
 
 1. User picks a plan and enters their DRC mobile-money phone number.
@@ -97,6 +102,103 @@ A `502` means the subscription row was created and immediately marked `failed`. 
 
 ---
 
+### `GET /subscriptions/:subscriptionID`
+
+Returns the current state of a subscription. Use this to poll after `POST /subscriptions` until the row transitions out of `pending`.
+
+**Path parameters**
+
+| Param            | Type   | Notes                                            |
+| ---------------- | ------ | ------------------------------------------------ |
+| `subscriptionID` | string | The `subscription.id` returned by `POST /subscriptions`. |
+
+**Successful response — `200 OK`**
+
+```json
+{
+  "id": "sub_uuid",
+  "created_at": "2026-05-28T10:12:00Z",
+  "user_id": "<supabase user id>",
+  "plan_id": "plan_basic_monthly",
+  "status": "active",
+  "started_at": "2026-05-28T10:12:48Z",
+  "expires_at": "2026-06-28T10:12:48Z"
+}
+```
+
+`status` is one of `pending`, `active`, `failed`, `canceled`. `started_at` and `expires_at` are only set once the subscription becomes `active` (and `expires_at` is omitted entirely for `life_time` plans).
+
+**Error responses**
+
+| Status | When                                  | Body shape                          |
+| ------ | ------------------------------------- | ----------------------------------- |
+| `400`  | Empty / missing `subscriptionID`      | `{ "error": "subscriptionID is required" }` |
+| `404`  | No subscription matches that id       | `{ "error": "subscription not found" }`     |
+
+This endpoint is **read-only** and safe to call on a tight interval.
+
+---
+
+### `POST /subscriptions/access`
+
+Checks whether a user has access to a given video. The backend looks up the plans that gate the video (via the `video_plans` join table), then checks the user's subscriptions against those plans.
+
+Call this before rendering the video player. If `has_access` is `false`, show the paywall / upsell instead of requesting a Mux playback URL.
+
+**Request body**
+
+| Field      | Type   | Required | Notes                                                                            |
+| ---------- | ------ | -------- | -------------------------------------------------------------------------------- |
+| `user_id`  | string | yes      | The Clerk user id (same value used in `POST /subscriptions`).                    |
+| `video_id` | string | yes      | The id of the video the user is trying to watch. Matches `video_plans.video_id`. |
+
+Example:
+
+```json
+{
+  "user_id": "user_2abc...",
+  "video_id": "vid_intro_2026"
+}
+```
+
+**Successful response — `200 OK`**
+
+```json
+{
+  "has_access": true,
+  "reason": "active",
+  "subscription": {
+    "id": "sub_uuid",
+    "user_id": "<supabase user id>",
+    "plan_id": "plan_basic_monthly",
+    "status": "active",
+    "started_at": "2026-05-28T10:12:48Z",
+    "expires_at": "2026-06-28T10:12:48Z"
+  }
+}
+```
+
+`reason` is one of:
+
+| Reason            | `has_access` | Meaning                                                                 |
+| ----------------- | ------------ | ----------------------------------------------------------------------- |
+| `free_video`      | `true`       | No plan gates this video — anyone can watch.                            |
+| `active`          | `true`       | User has an active, unexpired subscription to a plan that includes this video. |
+| `pending`         | `false`      | User has a pending subscription — the payment hasn't completed yet. Show "payment processing" instead of the paywall. |
+| `expired`         | `false`      | Subscription exists but is `failed`, `canceled`, or past `expires_at`.  |
+| `no_subscription` | `false`      | User has never subscribed to any gating plan. Show the paywall.         |
+
+The `subscription` field is included whenever the user has any record for a gating plan (active, pending, or expired) — useful for showing tailored messaging. It is omitted for `free_video` and `no_subscription`.
+
+**Error responses**
+
+| Status | When                                       | Body shape                          |
+| ------ | ------------------------------------------ | ----------------------------------- |
+| `400`  | Missing field, or Clerk user does not exist | `{ "error": "..." }`                |
+| `500`  | Backend failed to resolve the answer       | `{ "error": "..." }`                |
+
+---
+
 ## Subscription lifecycle
 
 A subscription transitions through these statuses (string values stored in the row):
@@ -152,21 +254,21 @@ function watchSubscription(subscriptionId: string, onChange: (sub: Subscription)
 
 Stop listening once `status` is one of `active`, `failed`, `canceled`.
 
-### Option B — Polling
+### Option B — Polling the backend (recommended fallback)
 
-If realtime is not wired up, poll the subscription row directly from Supabase (or via your own backend read endpoint):
+If realtime is not wired up, poll the backend's `GET /subscriptions/:subscriptionID` endpoint. This is the right choice when you don't want the frontend to hold Supabase credentials, or when you want a single integration surface.
 
 ```ts
-async function pollSubscription(id: string, { intervalMs = 3000, timeoutMs = 120_000 } = {}) {
+async function pollSubscription(
+  id: string,
+  { intervalMs = 3000, timeoutMs = 120_000 }: { intervalMs?: number; timeoutMs?: number } = {},
+): Promise<Subscription> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (error) throw error;
-    if (data.status !== "pending") return data;
+    const res = await fetch(`${API_BASE_URL}/subscriptions/${id}`);
+    if (!res.ok) throw new Error(`poll failed: ${res.status}`);
+    const sub = (await res.json()) as Subscription;
+    if (sub.status !== "pending") return sub;
     await new Promise((r) => setTimeout(r, intervalMs));
   }
   throw new Error("subscription_timeout");
@@ -174,6 +276,20 @@ async function pollSubscription(id: string, { intervalMs = 3000, timeoutMs = 120
 ```
 
 Use a 2–4 second interval and a 2-minute hard timeout. Shwary mobile-money confirmations typically arrive in under 60 seconds.
+
+### Option C — Polling Supabase directly
+
+If the frontend already has a Supabase client and you'd rather skip the extra backend hop, query the row directly. Functionally equivalent to Option B:
+
+```ts
+const { data, error } = await supabase
+  .from("user_subscriptions")
+  .select("*")
+  .eq("id", subscriptionId)
+  .single();
+```
+
+Stop polling once `data.status !== "pending"`.
 
 ---
 
@@ -219,6 +335,19 @@ type SubscribeResponse = {
   transaction: ShwaryTransaction;
 };
 
+type VideoAccessReason =
+  | "active"
+  | "pending"
+  | "expired"
+  | "no_subscription"
+  | "free_video";
+
+type CheckVideoAccessResponse = {
+  has_access: boolean;
+  reason: VideoAccessReason;
+  subscription?: Subscription;
+};
+
 export async function subscribeToPlan(body: SubscribeRequest): Promise<SubscribeResponse> {
   const res = await fetch(`${API_BASE_URL}/subscriptions`, {
     method: "POST",
@@ -231,7 +360,71 @@ export async function subscribeToPlan(body: SubscribeRequest): Promise<Subscribe
   }
   return res.json();
 }
+
+export async function getSubscription(id: string): Promise<Subscription> {
+  const res = await fetch(`${API_BASE_URL}/subscriptions/${id}`);
+  if (!res.ok) {
+    const { error } = (await res.json().catch(() => ({ error: res.statusText }))) as { error?: string };
+    throw new Error(error ?? `get subscription failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function checkVideoAccess(
+  userId: string,
+  videoId: string,
+): Promise<CheckVideoAccessResponse> {
+  const res = await fetch(`${API_BASE_URL}/subscriptions/access`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: userId, video_id: videoId }),
+  });
+  if (!res.ok) {
+    const { error } = (await res.json().catch(() => ({ error: res.statusText }))) as { error?: string };
+    throw new Error(error ?? `access check failed: ${res.status}`);
+  }
+  return res.json();
+}
 ```
+
+---
+
+## Gating the video player
+
+Wrap the video page in an access check. The pattern is:
+
+1. Call `POST /subscriptions/access` with the current Clerk user id and the video id.
+2. Branch on `reason`:
+
+```ts
+const access = await checkVideoAccess(clerkUserId, videoId);
+
+switch (access.reason) {
+  case "active":
+  case "free_video":
+    // Render the Mux player.
+    return <Player videoId={videoId} />;
+
+  case "pending":
+    // Don't show the paywall — the user already paid and is waiting.
+    return <PaymentProcessingNotice subscriptionId={access.subscription!.id} />;
+
+  case "expired":
+    return <RenewalPrompt subscription={access.subscription!} />;
+
+  case "no_subscription":
+  default:
+    return <Paywall videoId={videoId} />;
+}
+```
+
+Re-run the check on:
+
+- initial page load,
+- successful return from the subscribe flow (i.e. once polling sees `status === "active"`),
+- whenever the user's session changes.
+
+Never cache `has_access: true` across sessions or beyond `subscription.expires_at`. The backend is the source of truth — recheck whenever the user reopens the app.
 
 ---
 
