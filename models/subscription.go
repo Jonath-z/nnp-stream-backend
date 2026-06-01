@@ -10,12 +10,13 @@ const (
 )
 
 type Subscription struct {
-	ID        string `json:"id,omitempty"`
-	CreatedAt string `json:"created_at,omitempty"`
-	UserID    string `json:"user_id"`
-	PlanID    string `json:"plan_id"`
-	StartedAt string `json:"started_at,omitempty"`
-	ExpiresAt string `json:"expires_at,omitempty"`
+	ID        string             `json:"id,omitempty"`
+	CreatedAt string             `json:"created_at,omitempty"`
+	UserID    string             `json:"user_id"`
+	PlanID    string             `json:"plan_id"`
+	Status    SubscriptionStatus `json:"status,omitempty"`
+	StartedAt string             `json:"started_at,omitempty"`
+	ExpiresAt string             `json:"expires_at,omitempty"`
 }
 
 type PaymentTransaction struct {
@@ -40,4 +41,25 @@ type SubscribeRequest struct {
 	PlanID      string  `json:"plan_id" binding:"required"`
 	PhoneNumber string  `json:"phone_number" binding:"required"`
 	Amount      float64 `json:"amount" binding:"required,gt=0"`
+}
+
+type VideoAccessReason string
+
+const (
+	VideoAccessReasonActive         VideoAccessReason = "active"
+	VideoAccessReasonPending        VideoAccessReason = "pending"
+	VideoAccessReasonExpired        VideoAccessReason = "expired"
+	VideoAccessReasonNoSubscription VideoAccessReason = "no_subscription"
+	VideoAccessReasonFreeVideo      VideoAccessReason = "free_video"
+)
+
+type CheckVideoAccessRequest struct {
+	UserID  string `json:"user_id" binding:"required"`
+	VideoID string `json:"video_id" binding:"required"`
+}
+
+type CheckVideoAccessResponse struct {
+	HasAccess    bool              `json:"has_access"`
+	Reason       VideoAccessReason `json:"reason"`
+	Subscription *Subscription     `json:"subscription,omitempty"`
 }

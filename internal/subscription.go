@@ -12,6 +12,7 @@ const (
 	TABLE_PLANS         = "plans"
 	TABLE_SUBSCRIPTIONS = "user_subscriptions"
 	TABLE_TRANSACTIONS  = "payment_transactions"
+	TABLE_VIDEO_PLANS   = "video_plans"
 )
 
 func GetPlan(planID string) (models.Plan, error) {
@@ -128,6 +129,96 @@ func UpdatePaymentTransaction(transactionID string, patch map[string]interface{}
 		return fmt.Errorf("update transaction: %w", err)
 	}
 	return nil
+}
+
+func GetSubscriptionByID(id string) (models.Subscription, error) {
+	var sub models.Subscription
+	client, err := SupabaseClient()
+	if err != nil {
+		return sub, fmt.Errorf("init supabase: %w", err)
+	}
+	raw, _, err := client.From(TABLE_SUBSCRIPTIONS).Select("*", "exact", false).Eq("id", id).Single().Execute()
+	if err != nil {
+		return sub, fmt.Errorf("fetch subscription: %w", err)
+	}
+	if err := json.Unmarshal(raw, &sub); err != nil {
+		return sub, fmt.Errorf("decode subscription: %w", err)
+	}
+	return sub, nil
+}
+
+// GetPlanIDsForVideo returns the plan IDs that gate access to the given video.
+// An empty slice means the video is not gated by any paid plan.
+func GetPlanIDsForVideo(videoID string) ([]string, error) {
+	client, err := SupabaseClient()
+	if err != nil {
+		return nil, fmt.Errorf("init supabase: %w", err)
+	}
+	raw, _, err := client.From(TABLE_VIDEO_PLANS).Select("plan_id", "exact", false).Eq("video_id", videoID).Execute()
+	if err != nil {
+		return nil, fmt.Errorf("fetch video plans: %w", err)
+	}
+	var rows []struct {
+		PlanID string `json:"plan_id"`
+	}
+	if err := json.Unmarshal(raw, &rows); err != nil {
+		return nil, fmt.Errorf("decode video plans: %w", err)
+	}
+	ids := make([]string, 0, len(rows))
+	for _, r := range rows {
+		ids = append(ids, r.PlanID)
+	}
+	return ids, nil
+}
+
+// FindUserSubscriptionForPlans returns the user's most relevant subscription
+// among the given plan IDs. It prefers an active, unexpired subscription;
+// otherwise it returns the most recent pending one (so the caller can report
+// "payment still processing"). Returns (nil, nil) when no subscription matches.
+func FindUserSubscriptionForPlans(userID string, planIDs []string) (*models.Subscription, error) {
+	if len(planIDs) == 0 {
+		return nil, nil
+	}
+	client, err := SupabaseClient()
+	if err != nil {
+		return nil, fmt.Errorf("init supabase: %w", err)
+	}
+	raw, _, err := client.From(TABLE_SUBSCRIPTIONS).
+		Select("*", "exact", false).
+		Eq("user_id", userID).
+		In("plan_id", planIDs).
+		Execute()
+	if err != nil {
+		return nil, fmt.Errorf("fetch subscriptions: %w", err)
+	}
+	var subs []models.Subscription
+	if err := json.Unmarshal(raw, &subs); err != nil {
+		return nil, fmt.Errorf("decode subscriptions: %w", err)
+	}
+
+	now := time.Now().UTC()
+	var pending *models.Subscription
+	for i := range subs {
+		s := subs[i]
+		if s.Status == models.SubscriptionStatusActive && !isExpired(s.ExpiresAt, now) {
+			return &s, nil
+		}
+		if s.Status == models.SubscriptionStatusPending && pending == nil {
+			pending = &s
+		}
+	}
+	return pending, nil
+}
+
+func isExpired(expiresAt string, now time.Time) bool {
+	if expiresAt == "" {
+		return false
+	}
+	t, err := time.Parse(time.RFC3339, expiresAt)
+	if err != nil {
+		return false
+	}
+	return !t.After(now)
 }
 
 // ComputeSubscriptionExpiry returns the expiry timestamp for a given plan's billing cycle.

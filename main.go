@@ -58,6 +58,8 @@ func main() {
 
 	// Subscriptions / payments
 	r.POST("/subscriptions", handlers.HandleSubscribeToPlan)
+	r.POST("/subscriptions/access", handlers.GetSubscriptionStatus)
+	r.GET("/subscriptions/:subscriptionID", handlers.PollSubscriptionStatus)
 	r.POST("/mux-live-stream", handlers.HandleMuxLiveStream)
 	r.DELETE("/mux-live-stream/:liveStreamID", handlers.HandleMuxDeleteLiveStream)
 
