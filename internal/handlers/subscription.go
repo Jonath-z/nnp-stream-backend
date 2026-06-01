@@ -47,7 +47,6 @@ func HandleSubscribeToPlan(c *gin.Context) {
 	subscription, err := internal.CreateSubscription(models.Subscription{
 		UserID: req.UserID,
 		PlanID: plan.ID,
-		Status: models.SubscriptionStatusPending,
 	})
 	if err != nil {
 		log.Printf("subscribe: create subscription failed: %v", err)

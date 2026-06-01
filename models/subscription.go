@@ -10,30 +10,29 @@ const (
 )
 
 type Subscription struct {
-	ID        string             `json:"id,omitempty"`
-	CreatedAt string             `json:"created_at,omitempty"`
-	UserID    string             `json:"user_id"`
-	PlanID    string             `json:"plan_id"`
-	Status    SubscriptionStatus `json:"status"`
-	StartedAt string             `json:"started_at,omitempty"`
-	ExpiresAt string             `json:"expires_at,omitempty"`
+	ID        string `json:"id,omitempty"`
+	CreatedAt string `json:"created_at,omitempty"`
+	UserID    string `json:"user_id"`
+	PlanID    string `json:"plan_id"`
+	StartedAt string `json:"started_at,omitempty"`
+	ExpiresAt string `json:"expires_at,omitempty"`
 }
 
 type PaymentTransaction struct {
-	ID              string  `json:"id,omitempty"`
-	CreatedAt       string  `json:"created_at,omitempty"`
-	UserID          string  `json:"user_id"`
-	PlanID          string  `json:"plan_id"`
-	SubscriptionID  string  `json:"subscription_id,omitempty"`
-	Provider        string  `json:"provider"`
-	ProviderTxID    string  `json:"provider_tx_id"`
-	Amount          float64 `json:"amount"`
-	Currency        string  `json:"currency"`
-	PhoneNumber     string  `json:"phone_number"`
-	Status          string  `json:"status"`
-	FailureReason   string  `json:"failure_reason,omitempty"`
-	TxHash          string  `json:"tx_hash,omitempty"`
-	CompletedAt     string  `json:"completed_at,omitempty"`
+	ID             string  `json:"id,omitempty"`
+	CreatedAt      string  `json:"created_at,omitempty"`
+	UserID         string  `json:"user_id"`
+	PlanID         string  `json:"plan_id"`
+	SubscriptionID string  `json:"subscription_id,omitempty"`
+	Provider       string  `json:"provider"`
+	ProviderTxID   string  `json:"provider_tx_id"`
+	Amount         float64 `json:"amount"`
+	Currency       string  `json:"currency"`
+	PhoneNumber    string  `json:"phone_number"`
+	Status         string  `json:"status"`
+	FailureReason  string  `json:"failure_reason,omitempty"`
+	TxHash         string  `json:"tx_hash,omitempty"`
+	CompletedAt    string  `json:"completed_at,omitempty"`
 }
 
 type SubscribeRequest struct {
