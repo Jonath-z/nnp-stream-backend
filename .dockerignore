@@ -1,0 +1,9 @@
+.env
+.git
+.gitignore
+.idea
+tmp
+Dockerfile*
+.dockerignore
+asset.json
+deleted.asset.json
