@@ -51,6 +51,7 @@ func main() {
 	r := gin.Default()
 	r.Use(middleware.Cors)
 	r.GET("/", handlers.HealthCheck)
+	r.GET("/up", handlers.HealthCheck)
 	r.GET("/mux-signed-url", handlers.HandleMuxSignedUploadUrl)
 	r.POST("/mux-web-hook", webhook.HandleMuxWebhook)
 	r.POST("/clerk-web-hook", webhook.HandleCleckWebhook)
